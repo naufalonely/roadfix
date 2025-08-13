@@ -24,11 +24,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.database.FirebaseDatabase
+import edu.unikom.uasproject.api.NominatimClient
 import edu.unikom.uasproject.model.ReportItem
+import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -39,7 +42,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
+import android.util.Log
 
 class ReportFragment : Fragment() {
 
@@ -127,13 +130,13 @@ class ReportFragment : Fragment() {
         etDescription = view.findViewById(R.id.et_description)
         btnSubmit = view.findViewById(R.id.btn_submit_report)
         mapView = view.findViewById(R.id.map_fragment)
+        progressBar = view.findViewById(R.id.progress_bar)
 
         val damageTypes = listOf("Pilih Jenis Kerusakan", "Berlubang", "Retak", "Genangan Air", "Ambles")
         val severityLevels = listOf("Pilih Tingkat Keparahan", "Rendah", "Sedang", "Tinggi")
 
         setupSpinner(spinnerDamageType, damageTypes)
         setupSpinner(spinnerSeverity, severityLevels)
-        progressBar = view.findViewById(R.id.progress_bar)
     }
 
     private fun setupSpinner(spinner: Spinner, items: List<String>) {
@@ -230,6 +233,7 @@ class ReportFragment : Fragment() {
         }
 
         progressBar.visibility = View.VISIBLE
+        btnSubmit.isEnabled = false
 
         val damageType = spinnerDamageType.selectedItem.toString()
         val severity = spinnerSeverity.selectedItem.toString()
@@ -238,57 +242,78 @@ class ReportFragment : Fragment() {
         val longitude = reportLocation!!.longitude
         val datetime = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault()).format(Date())
 
-        val photoPath = saveBitmapToTempFile(selectedPhoto!!)
-        val photoUrl = photoPath
-
         val database = FirebaseDatabase.getInstance("https://roadfix-app-af5f0-default-rtdb.asia-southeast1.firebasedatabase.app")
         val reportsRef = database.getReference("reports")
         val reportId = reportsRef.push().key
         if (reportId == null) {
             Toast.makeText(context, "Gagal membuat ID laporan unik.", Toast.LENGTH_SHORT).show()
+            progressBar.visibility = View.GONE
+            btnSubmit.isEnabled = true
             return
         }
 
-        val report = ReportItem(
-            id = reportId,
-            photoUrl = photoUrl,
-            damageType = damageType,
-            location = "Lokasi Laporan",
-            status = "Terkirim",
-            description = description,
-            severity = severity,
-            datetime = datetime,
-            latitude = latitude,
-            longitude = longitude
-        )
+        val photoPath = saveBitmapToTempFile(selectedPhoto!!, reportId)
+        val photoUrl = photoPath
 
-        reportsRef.child(reportId).setValue(report)
-            .addOnSuccessListener {
-                progressBar.visibility = View.GONE
-                Toast.makeText(context, "Laporan berhasil dikirim!", Toast.LENGTH_LONG).show()
-
-                val bundle = Bundle().apply {
-                    putString("photo_path", photoUrl)
-                    putString("status", "Terkirim")
-                    putString("damage_type", damageType)
-                    putString("description", description)
-                    putString("severity", severity)
-                    putDouble("latitude", latitude)
-                    putDouble("longitude", longitude)
-                    putString("datetime", datetime)
+        lifecycleScope.launch {
+            try {
+                val response = NominatimClient.api.reverseGeocode(latitude, longitude)
+                val locationName = if (response.isSuccessful) {
+                    response.body()?.displayName ?: "Lokasi Tidak Diketahui"
+                } else {
+                    "Lokasi Tidak Diketahui"
                 }
 
-                findNavController().navigate(R.id.action_reportFragment_to_reportDetailFragment, bundle)
-            }
-            .addOnFailureListener {
+                val report = ReportItem(
+                    id = reportId,
+                    photoUrl = photoUrl,
+                    damageType = damageType,
+                    location = locationName,
+                    status = "Terkirim",
+                    description = description,
+                    severity = severity,
+                    datetime = datetime,
+                    latitude = latitude,
+                    longitude = longitude
+                )
+
+                reportsRef
+                    .child(reportId)
+                    .setValue(report)
+                    .addOnSuccessListener {
+                        progressBar.visibility = View.GONE
+                        btnSubmit.isEnabled = true
+                        Toast.makeText(requireContext(), "Laporan berhasil dikirim", Toast.LENGTH_SHORT).show()
+
+                        val bundle = Bundle().apply {
+                            putString("photo_path", photoUrl)
+                            putString("status", "Terkirim")
+                            putString("damage_type", damageType)
+                            putString("description", description)
+                            putString("severity", severity)
+                            putDouble("latitude", latitude)
+                            putDouble("longitude", longitude)
+                            putString("datetime", datetime)
+                            putString("location_name", locationName)
+                        }
+                        findNavController().navigate(R.id.action_reportFragment_to_reportDetailFragment, bundle)
+                    }
+                    .addOnFailureListener {
+                        progressBar.visibility = View.GONE
+                        btnSubmit.isEnabled = true
+                        Toast.makeText(requireContext(), "Gagal menyimpan laporan", Toast.LENGTH_SHORT).show()
+                    }
+            } catch (e: Exception) {
                 progressBar.visibility = View.GONE
-                Toast.makeText(context, "Gagal mengirim laporan: ${it.message}", Toast.LENGTH_LONG).show()
+                btnSubmit.isEnabled = true
+                Toast.makeText(requireContext(), "Gagal mengambil lokasi: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+        }
     }
 
-    private fun saveBitmapToTempFile(bitmap: Bitmap): String {
+    private fun saveBitmapToTempFile(bitmap: Bitmap, reportId: String): String {
         val filesDir = requireActivity().applicationContext.filesDir
-        val tempFile = File(filesDir, "temp_report_photo.png")
+        val tempFile = File(filesDir, "report_photo_$reportId.png")
         FileOutputStream(tempFile).use { out ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
         }

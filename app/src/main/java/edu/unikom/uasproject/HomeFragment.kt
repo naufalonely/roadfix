@@ -283,15 +283,12 @@ class HomeFragment : Fragment() {
     }
 
     private fun findMyLocation() {
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(requireContext(), "Izin lokasi diperlukan.", Toast.LENGTH_SHORT).show()
-            return
-        }
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location ->
                 location?.let {
                     val userLocation = GeoPoint(it.latitude, it.longitude)
                     mapView.controller.animateTo(userLocation)
+                    mapView.controller.setZoom(16.0)
                 } ?: run {
                     Toast.makeText(requireContext(), "Lokasi tidak tersedia.", Toast.LENGTH_SHORT).show()
                 }

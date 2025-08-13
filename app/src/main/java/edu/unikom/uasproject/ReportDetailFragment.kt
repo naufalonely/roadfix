@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import edu.unikom.uasproject.databinding.FragmentReportDetailBinding
-import edu.unikom.uasproject.model.ReportItem
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -49,6 +48,7 @@ class ReportDetailFragment : Fragment() {
         val datetime = arguments?.getString("datetime")
         val latitude = arguments?.getDouble("latitude")
         val longitude = arguments?.getDouble("longitude")
+        val locationName = arguments?.getString("location_name")
 
         if (!photoUrl.isNullOrEmpty()) {
             val file = File(photoUrl)
@@ -66,6 +66,11 @@ class ReportDetailFragment : Fragment() {
         binding.tvReportSeverity.text = severity
         binding.tvReportDatetime.text = datetime
 
+        if (!locationName.isNullOrEmpty()) {
+            binding.tvLocationLabel.text = locationName
+        }
+
+
         if (latitude != null && longitude != null) {
             val locationPoint = GeoPoint(latitude, longitude)
             mapDetailView.controller.setZoom(16.0)
@@ -74,7 +79,8 @@ class ReportDetailFragment : Fragment() {
             val marker = Marker(mapDetailView)
             marker.position = locationPoint
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            marker.title = "Lokasi Laporan"
+            // Perbaiki: Gunakan locationName untuk judul marker
+            marker.title = locationName ?: "Lokasi Laporan"
             mapDetailView.overlays.add(marker)
         }
     }
