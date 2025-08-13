@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Frame kotak -->
+    <path
+        android:fillColor="#BDBDBD"
+        android:pathData="M4,4h16v16H4z"
+        android:fillAlpha="0.2"/>
+
+    <!-- Gunung -->
+    <path
+        android:fillColor="#757575"
+        android:pathData="M4,18l5-6 3.5,4.5L17,11l3,4v3z" />
+
+    <!-- Matahari -->
+    <path
+        android:fillColor="#757575"
+        android:pathData="M14.5,7.5m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+</vector>

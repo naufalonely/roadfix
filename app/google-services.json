@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "367207852670",
+    "project_id": "roadfix-app-af5f0",
+    "storage_bucket": "roadfix-app-af5f0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:367207852670:android:663c4c0af92977c491062f",
+        "android_client_info": {
+          "package_name": "edu.unikom.uasproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBlGmWHF2TW0uUhaBT5o9H2xAYEKS4RKA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

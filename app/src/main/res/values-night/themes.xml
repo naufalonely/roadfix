@@ -1,0 +1,14 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.UASProject" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/button</item>
+        <item name="toolbarStyle">@style/CustomToolbar</item>
+    </style>
+
+    <style name="Theme.UASProject" parent="Base.Theme.UASProject" />
+
+    <style name="CustomToolbar" parent="Widget.Material3.Toolbar">
+        <item name="background">@color/button</item>
+        <item name="titleTextColor">@android:color/black</item>
+        <item name="actionMenuTextColor">@android:color/black</item>
+    </style>
+</resources>

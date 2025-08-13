@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="report"
+            type="edu.unikom.uasproject.model.ReportItem" />
+        <variable
+            name="clickListener"
+            type="edu.unikom.uasproject.adapter.ReportClickListener" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/gray_400"
+        android:padding="16dp"
+        android:onClick="@{() -> clickListener.onClick(report)}">
+
+        <ImageView
+            android:id="@+id/iv_report_photo_thumbnail"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_gallery_placeholder"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@tools:sample/avatars" />
+
+        <TextView
+            android:id="@+id/tv_damage_type"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:fontFamily="@font/poppins"
+            android:text="@{report.damageType}"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/iv_report_photo_thumbnail"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Berlubang" />
+
+        <TextView
+            android:id="@+id/tv_location"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/poppins"
+            android:text="@{report.location}"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/iv_report_photo_thumbnail"
+            app:layout_constraintTop_toBottomOf="@id/tv_damage_type"
+            tools:text="Jl. Dipatiukur No. 1" />
+
+        <TextView
+            android:id="@+id/tv_report_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/poppins"
+            android:text="@{report.status}"
+            android:textColor="@color/black"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/iv_report_photo_thumbnail"
+            app:layout_constraintTop_toBottomOf="@id/tv_location"
+            tools:text="Menunggu Perbaikan" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -1,0 +1,21 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.UASProject" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimary</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+
+        <item name="colorButtonNormal">@color/button</item>
+        <item name="colorControlNormal">@color/textPrimary</item>
+
+        <item name="toolbarStyle">@style/CustomToolbar</item>
+    </style>
+
+    <style name="Theme.UASProject" parent="Base.Theme.UASProject" />
+
+    <style name="CustomToolbar" parent="Widget.Material3.Toolbar">
+        <item name="background">@color/colorPrimary</item>
+        <item name="titleTextColor">@color/textPrimary</item>
+        <item name="subtitleTextColor">@color/textSecondary</item>
+        <item name="actionMenuTextColor">@color/textPrimary</item>
+    </style>
+</resources>

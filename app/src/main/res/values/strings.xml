@@ -1,0 +1,76 @@
+<resources>
+    <string name="app_name">RoadFix</string>
+    <string name="welcome">Welcome</string>
+    <string name="btn_lewati">Lewati</string>
+    <string name="btn_mulai">Mulai Sekarang</string>
+    <string name="text_email">Email</string>
+    <string name="hint_email">Masukkan email di sini</string>
+    <string name="text_password">Password</string>
+    <string name="hint_password">Masukkan Password di sini</string>
+    <string name="btn_masuk">Masuk</string>
+    <string name="text_daftar">Tidak Punya Akun? Daftar</string>
+    <string name="btn_daftar">Daftar</string>
+    <string name="text_nama">Nama</string>
+    <string name="hint_nama">Masukkan nama di sini</string>
+    <string name="text_conf_password">Konfirmasi Password</string>
+    <string name="hint_conf_password">Konfirmasikan password di sini</string>
+    <string name="text_masuk">Sudah Punya Akun? Masuk</string>
+    <string name="text_search">Search. . .</string>
+    <string name="text_foto">Ambil foto atau pilih dari galeri</string>
+    <string name="text_jenis">Jenis Kerusakan</string>
+    <string name="hint_jenis">Pilih Jenis Kerusakan</string>
+    <string-array name="jenis_kerusakan_array">
+        <item>Berlubang</item>
+        <item>Retak</item>
+        <item>Genangan Air</item>
+        <item>Ambles</item>
+    </string-array>
+    <string name="text_deskripsi">Deskripsi Kerusakan</string>
+    <string name="hint_deskripsi">Deskripsikan Jenis Kerusakan</string>
+    <string name="text_keparahan">Tingkat Keparahan</string>
+    <string name="hint_keparahan">Pilih Tingkat Keparahan</string>
+    <string-array name="tingkat_keparahan_array">
+        <item>Rendah</item>
+        <item>Sedang</item>
+        <item>Tinggi</item>
+    </string-array>
+    <string name="text_lokasi">Edit Lokasi</string>
+    <string name="btn_laporan">Kirim Laporan</string>
+    <string name="hasil_foto">Foto Laporan</string>
+    <string name="text_status">Status Laporan</string>
+    <string name="hint_status">Status Laporan . . .</string>
+    <string-array name="status_laporan_array">
+        <item>Menunggu Konfirmasi</item>
+        <item>Dalam Proses Perbaikan</item>
+        <item>Selesai</item>
+    </string-array>
+    <string name="text_info">Informasi Laporan</string>
+    <string name="hasil_waktu">Tanggal dan Waktu Laporan</string>
+    <string name="hasil_jenis">Jenis Kerusakan</string>
+    <string name="hasil_deskripsi">Deskripsi Kerusakan</string>
+    <string name="hasil_keparahan">Tingkat Keparahan</string>
+    <string name="hasil_lokasi">Lokasi Laporan</string>
+    <string name="title_laporan">Daftar Laporan Saya</string>
+    <string name="title_notif">Notifikasi Laporan</string>
+    <string name="title_settings">Pengaturan Aplikasi</string>
+    <string name="title_profile">Profil Pengguna</string>
+    <string name="desc_profile">Edit Nama, Email, dan detail lainnya.</string>
+    <string name="title_notifications">Pengaturan Notifikasi</string>
+    <string name="desc_notifications">Toggle untuk mengaktifkan/menonaktifkan jenis notifikasi tertentu</string>
+    <string name="title_about">Tentang Aplikasi</string>
+    <string name="title_logout">Keluar Aplikasi</string>
+    <string name="title_nama">Nama</string>
+    <string name="title_email">Email</string>
+    <string name="title_password">Password</string>
+    <string name="btn_simpan">Simpan Perubahan</string>
+    <string name="loginpage">Login</string>
+    <string name="registerpage">Register</string>
+    <string name="homepage">Home</string>
+    <string name="reportpage">Report</string>
+    <string name="reportdetailpage">Report Detail Page</string>
+    <string name="myreportspage">My Reports</string>
+    <string name="myreportsdetailpage">My Reports Detail</string>
+    <string name="notificationspage">Notifications</string>
+    <string name="settingspage">Settings</string>
+    <string name="profilepage">Profile</string>
+</resources>

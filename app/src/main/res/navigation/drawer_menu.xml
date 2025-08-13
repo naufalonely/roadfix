@@ -1,0 +1,28 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/homeFragment"
+            android:icon="@drawable/ic_home"
+            android:title="Home" />
+        <item
+            android:id="@+id/reportFragment"
+            android:icon="@drawable/ic_report"
+            android:title="Report" />
+        <item
+            android:id="@+id/myReportsFragment"
+            android:icon="@drawable/ic_my_reports"
+            android:title="My Reports" />
+        <item
+            android:id="@+id/notificationsFragment"
+            android:icon="@drawable/ic_notifications"
+            android:title="Notifications" />
+        <item
+            android:id="@+id/settingsFragment"
+            android:icon="@drawable/ic_settings"
+            android:title="Settings" />
+    </group>
+    <item
+        android:id="@+id/logoutFragment"
+        android:icon="@drawable/ic_logout"
+        android:title="Logout" />
+</menu>
