@@ -54,7 +54,8 @@ class HomeFragment : Fragment() {
     private val client = OkHttpClient()
 
     private lateinit var roadStabilityData: List<RoadStability>
-
+    private var pendingReports: List<ReportItem>? = null
+    private var isMapReady = false
     private val provinceCoordinates = mapOf(
         "ACEH" to GeoPoint(4.6951, 96.7493),
         "SUMATERA UTARA" to GeoPoint(2.1153, 99.5451),
@@ -99,7 +100,6 @@ class HomeFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        fetchReportsFromFirebase()
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -108,6 +108,18 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         (activity as AppCompatActivity).supportActionBar?.show()
 
+        setupMap()
+        setupListeners()
+
+        roadStabilityData = parsePuprCsvData()
+        checkLocationPermission()
+
+        view.post {
+            fetchReportsFromFirebase()
+        }
+    }
+
+    private fun setupMap() {
         val ctx = requireContext()
         Configuration.getInstance().load(ctx, androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx))
 
@@ -129,8 +141,15 @@ class HomeFragment : Fragment() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
-        roadStabilityData = parsePuprCsvData()
+        isMapReady = true
 
+        pendingReports?.let { reports ->
+            displayReportsOnMap(reports)
+            pendingReports = null
+        }
+    }
+
+    private fun setupListeners() {
         binding.searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (!query.isNullOrEmpty()) {
@@ -154,8 +173,6 @@ class HomeFragment : Fragment() {
         binding.fabPuprLayer.setOnClickListener {
             showPuprDataDialog()
         }
-
-        checkLocationPermission()
     }
 
     private fun geocodeAddress(address: String) {
@@ -226,6 +243,10 @@ class HomeFragment : Fragment() {
     }
 
     private fun displayRoadStabilityOnMap(roadStability: RoadStability) {
+        if (!isMapReady || !::mapView.isInitialized) {
+            return
+        }
+
         mapView.overlays.clear()
         mapView.overlays.add(myLocationOverlay)
 
@@ -277,12 +298,22 @@ class HomeFragment : Fragment() {
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
         } else {
-            myLocationOverlay.enableMyLocation()
-            findMyLocation()
+            if (::myLocationOverlay.isInitialized) {
+                myLocationOverlay.enableMyLocation()
+                findMyLocation()
+            }
         }
     }
 
     private fun findMyLocation() {
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+
+        if (!isMapReady || !::fusedLocationClient.isInitialized) {
+            return
+        }
+
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location ->
                 location?.let {
@@ -299,7 +330,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun fetchReportsFromFirebase() {
-        val database = FirebaseDatabase.getInstance()
+        val database = FirebaseDatabase.getInstance("https://roadfix-app-af5f0-default-rtdb.asia-southeast1.firebasedatabase.app")
         val reportsRef = database.getReference("reports")
 
         reportsRef.addValueEventListener(object : ValueEventListener {
@@ -311,7 +342,12 @@ class HomeFragment : Fragment() {
                         reportsList.add(it)
                     }
                 }
-                displayReportsOnMap(reportsList)
+
+                if (isMapReady && ::mapView.isInitialized) {
+                    displayReportsOnMap(reportsList)
+                } else {
+                    pendingReports = reportsList
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -321,48 +357,81 @@ class HomeFragment : Fragment() {
     }
 
     private fun displayReportsOnMap(reports: List<ReportItem>) {
-        mapView.overlays.clear()
-
-        mapView.overlays.add(myLocationOverlay)
-
-        for (report in reports) {
-            val reportGeoPoint = GeoPoint(report.latitude, report.longitude)
-            val reportMarker = Marker(mapView)
-            reportMarker.position = reportGeoPoint
-            reportMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            reportMarker.title = report.damageType
-            reportMarker.snippet = "Status: ${report.status}\nTingkat Keparahan: ${report.severity}"
-
-            val markerIcon: Drawable? = when (report.severity) {
-                "Rendah" -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_rendah)
-                "Sedang" -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_sedang)
-                "Tinggi" -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_tinggi)
-                else -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_default)
-            }
-            if (markerIcon != null) {
-                reportMarker.icon = markerIcon
-            }
-
-            mapView.overlays.add(reportMarker)
+        if (!isMapReady || !::mapView.isInitialized) {
+            pendingReports = reports
+            return
         }
-        mapView.invalidate()
+
+        try {
+            val overlaysToKeep = mutableListOf<org.osmdroid.views.overlay.Overlay>()
+            if (::myLocationOverlay.isInitialized) {
+                overlaysToKeep.add(myLocationOverlay)
+            }
+
+            mapView.overlays.forEach { overlay ->
+                if (overlay is CompassOverlay || overlay is RotationGestureOverlay) {
+                    overlaysToKeep.add(overlay)
+                }
+            }
+
+            mapView.overlays.clear()
+            mapView.overlays.addAll(overlaysToKeep)
+
+            for (report in reports) {
+                try {
+                    val reportGeoPoint = GeoPoint(report.latitude, report.longitude)
+                    val reportMarker = Marker(mapView)
+                    reportMarker.position = reportGeoPoint
+                    reportMarker.title = report.damageType
+                    reportMarker.snippet = "Status: ${report.status}\nTingkat Keparahan: ${report.severity}"
+
+                    val markerIcon: Drawable? = when (report.severity) {
+                        "Rendah" -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_rendah)
+                        "Sedang" -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_sedang)
+                        "Tinggi" -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_tinggi)
+                        else -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_default)
+                    }
+                    if (markerIcon != null) {
+                        reportMarker.icon = markerIcon
+                    }
+
+                    mapView.overlays.add(reportMarker)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            mapView.invalidate()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Error displaying reports on map", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        mapView.onResume()
-        myLocationOverlay.enableMyLocation()
+        if (::mapView.isInitialized) {
+            mapView.onResume()
+        }
+        if (::myLocationOverlay.isInitialized) {
+            myLocationOverlay.enableMyLocation()
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        mapView.onPause()
-        myLocationOverlay.disableMyLocation()
+        if (::mapView.isInitialized) {
+            mapView.onPause()
+        }
+        if (::myLocationOverlay.isInitialized) {
+            myLocationOverlay.disableMyLocation()
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        mapView.onDetach()
+        if (::mapView.isInitialized) {
+            mapView.onDetach()
+        }
         _binding = null
     }
 
@@ -374,8 +443,10 @@ class HomeFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                myLocationOverlay.enableMyLocation()
-                findMyLocation()
+                if (::myLocationOverlay.isInitialized) {
+                    myLocationOverlay.enableMyLocation()
+                    findMyLocation()
+                }
             } else {
                 Toast.makeText(requireContext(), "Izin lokasi ditolak.", Toast.LENGTH_SHORT).show()
             }
