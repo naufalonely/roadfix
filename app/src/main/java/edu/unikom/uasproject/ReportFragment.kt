@@ -16,6 +16,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,6 +40,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+
 class ReportFragment : Fragment() {
 
     private lateinit var photoContainer: FrameLayout
@@ -48,6 +50,7 @@ class ReportFragment : Fragment() {
     private lateinit var spinnerSeverity: Spinner
     private lateinit var btnSubmit: Button
     private lateinit var etDescription: EditText
+    private lateinit var progressBar: ProgressBar
 
     private lateinit var mapView: MapView
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -130,6 +133,7 @@ class ReportFragment : Fragment() {
 
         setupSpinner(spinnerDamageType, damageTypes)
         setupSpinner(spinnerSeverity, severityLevels)
+        progressBar = view.findViewById(R.id.progress_bar)
     }
 
     private fun setupSpinner(spinner: Spinner, items: List<String>) {
@@ -225,6 +229,8 @@ class ReportFragment : Fragment() {
             return
         }
 
+        progressBar.visibility = View.VISIBLE
+
         val damageType = spinnerDamageType.selectedItem.toString()
         val severity = spinnerSeverity.selectedItem.toString()
         val description = etDescription.text.toString()
@@ -235,7 +241,7 @@ class ReportFragment : Fragment() {
         val photoPath = saveBitmapToTempFile(selectedPhoto!!)
         val photoUrl = photoPath
 
-        val database = FirebaseDatabase.getInstance()
+        val database = FirebaseDatabase.getInstance("https://roadfix-app-af5f0-default-rtdb.asia-southeast1.firebasedatabase.app")
         val reportsRef = database.getReference("reports")
         val reportId = reportsRef.push().key
         if (reportId == null) {
@@ -247,7 +253,7 @@ class ReportFragment : Fragment() {
             id = reportId,
             photoUrl = photoUrl,
             damageType = damageType,
-            location = "Lokasi Laporan", // Ganti ini dengan alamat geocoding
+            location = "Lokasi Laporan",
             status = "Terkirim",
             description = description,
             severity = severity,
@@ -258,6 +264,7 @@ class ReportFragment : Fragment() {
 
         reportsRef.child(reportId).setValue(report)
             .addOnSuccessListener {
+                progressBar.visibility = View.GONE
                 Toast.makeText(context, "Laporan berhasil dikirim!", Toast.LENGTH_LONG).show()
 
                 val bundle = Bundle().apply {
@@ -274,6 +281,7 @@ class ReportFragment : Fragment() {
                 findNavController().navigate(R.id.action_reportFragment_to_reportDetailFragment, bundle)
             }
             .addOnFailureListener {
+                progressBar.visibility = View.GONE
                 Toast.makeText(context, "Gagal mengirim laporan: ${it.message}", Toast.LENGTH_LONG).show()
             }
     }

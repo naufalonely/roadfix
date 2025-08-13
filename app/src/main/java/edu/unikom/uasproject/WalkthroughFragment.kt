@@ -24,9 +24,9 @@ class WalkthroughFragment : Fragment() {
     private lateinit var dotsLayout: LinearLayout
 
     private val walkthroughItems = listOf(
-        WalkthroughItem(R.drawable.img_walkthrough1, "Laporkan Jalan Rusak dengan Mudah", "Hanya butuh beberapa ketukan untuk membantu menciptakan jalan mulus.", "Lewati"),
-        WalkthroughItem(R.drawable.img_walkthrough2, "Pantau Progres Perbaikan", "Dapatkan update real-time dan lihat hasil perbaikan laporan Anda.", "Lewati"),
-        WalkthroughItem(R.drawable.img_walkthrough3, "Berkontribusi untuk Jalan yang Lebih Baik", "Bersama kita bangun jalan mulus untuk masa depan.", "Mulai Sekarang")
+        WalkthroughItem(R.drawable.wt_report, "Laporkan Jalan Rusak dengan Mudah", "Hanya butuh beberapa ketukan untuk membantu menciptakan jalan mulus.", "Lewati"),
+        WalkthroughItem(R.drawable.wt_work, "Pantau Progres Perbaikan", "Dapatkan update real-time dan lihat hasil perbaikan laporan Anda.", "Lewati"),
+        WalkthroughItem(R.drawable.wt_progress, "Berkontribusi untuk Jalan yang Lebih Baik", "Bersama kita bangun jalan mulus untuk masa depan.", "Mulai Sekarang")
     )
 
     override fun onCreateView(

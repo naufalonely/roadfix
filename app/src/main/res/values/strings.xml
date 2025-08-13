@@ -34,7 +34,7 @@
         <item>Sedang</item>
         <item>Tinggi</item>
     </string-array>
-    <string name="text_lokasi">Edit Lokasi</string>
+    <string name="text_lokasi">Preview Lokasi</string>
     <string name="btn_laporan">Kirim Laporan</string>
     <string name="hasil_foto">Foto Laporan</string>
     <string name="text_status">Status Laporan</string>

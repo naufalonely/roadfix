@@ -135,6 +135,12 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"/>
+        <argument
+            android:name="photo_path"
+            app:argType="string" />
+        <argument
+            android:name="status"
+            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/reportDetailFragment"
@@ -209,4 +215,12 @@
         android:name="edu.unikom.uasproject.LogoutFragment"
         android:label="Logout"
         tools:layout="@layout/fragment_logout"/>
+
+    <action
+        android:id="@+id/action_homeFragment_to_menuLogout"
+        app:destination="@id/menuLogout" />
+
+    <action
+        android:id="@+id/action_settingsFragment_to_menuLogout"
+        app:destination="@id/menuLogout" />
 </navigation>

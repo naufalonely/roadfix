@@ -4,6 +4,7 @@ plugins {
     id("kotlin-parcelize")
     id("kotlin-kapt")
     id("com.google.gms.google-services")
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 android {
@@ -62,13 +63,9 @@ dependencies {
 
     implementation(platform(libs.firebase.bom.v3274))
     implementation(libs.google.firebase.database.ktx)
+    implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.analytics.ktx)
     implementation(libs.com.google.firebase.firebase.auth.ktx)
-
-    // Firebase
-//    implementation(platform(libs.firebase.bom))
-//    implementation(libs.google.firebase.auth.ktx)
-//    implementation(libs.firebase.database.ktx)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.runtime.saved.instance.state)
 

@@ -21,6 +21,7 @@
             android:icon="@drawable/ic_settings"
             android:title="Settings" />
     </group>
+
     <item
         android:id="@+id/logoutFragment"
         android:icon="@drawable/ic_logout"

@@ -47,7 +47,7 @@ class MyReportsFragment : Fragment(), ReportClickListener {
     }
 
     private fun fetchReportsFromFirebase() {
-        val database = FirebaseDatabase.getInstance()
+        val database = FirebaseDatabase.getInstance("https://roadfix-app-af5f0-default-rtdb.asia-southeast1.firebasedatabase.app")
         val reportsRef = database.getReference("reports")
 
         reportsRef.addValueEventListener(object : ValueEventListener {

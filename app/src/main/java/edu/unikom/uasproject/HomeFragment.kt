@@ -26,6 +26,7 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
@@ -34,6 +35,13 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 import java.util.Locale
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import edu.unikom.uasproject.model.ReportItem
+import android.graphics.drawable.Drawable
+import androidx.core.content.ContextCompat
 
 class HomeFragment : Fragment() {
 
@@ -45,10 +53,53 @@ class HomeFragment : Fragment() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val client = OkHttpClient()
 
+    private lateinit var roadStabilityData: List<RoadStability>
+
+    private val provinceCoordinates = mapOf(
+        "ACEH" to GeoPoint(4.6951, 96.7493),
+        "SUMATERA UTARA" to GeoPoint(2.1153, 99.5451),
+        "SUMATERA BARAT" to GeoPoint(-0.8409, 100.3531),
+        "RIAU" to GeoPoint(0.5055, 101.4566),
+        "JAMBI" to GeoPoint(-1.6042, 103.6131),
+        "SUMATERA SELATAN" to GeoPoint(-3.3194, 104.5779),
+        "BENGKULU" to GeoPoint(-3.7925, 102.2618),
+        "LAMPUNG" to GeoPoint(-4.5518, 105.4057),
+        "KEPULAUAN BANGKA BELITUNG" to GeoPoint(-2.7486, 106.4449),
+        "KEPULAUAN RIAU" to GeoPoint(0.9170, 104.4533),
+//        "DKI JAKARTA" to GeoPoint(-6.2088, 106.8456),
+        "JAWA BARAT" to GeoPoint(-6.9175, 107.6191),
+        "JAWA TENGAH" to GeoPoint(-7.2500, 110.0900),
+        "D.I. YOGYAKARTA" to GeoPoint(-7.7956, 110.3695),
+        "JAWA TIMUR" to GeoPoint(-7.2575, 112.7521),
+        "BANTEN" to GeoPoint(-6.4058, 106.0640),
+        "BALI" to GeoPoint(-8.3405, 115.0917),
+        "NUSA TENGGARA BARAT" to GeoPoint(-8.6527, 117.3616),
+        "NUSA TENGGARA TIMUR" to GeoPoint(-8.5833, 120.9167),
+        "KALIMANTAN BARAT" to GeoPoint(-0.2546, 111.4550),
+        "KALIMANTAN TENGAH" to GeoPoint(-1.6000, 113.8000),
+        "KALIMANTAN SELATAN" to GeoPoint(-3.3167, 114.5900),
+        "KALIMANTAN TIMUR" to GeoPoint(0.5000, 116.7000),
+        "KALIMANTAN UTARA" to GeoPoint(2.8256, 116.9405),
+        "SULAWESI UTARA" to GeoPoint(1.4748, 124.8421),
+        "SULAWESI TENGAH" to GeoPoint(-1.4300, 121.4116),
+        "SULAWESI SELATAN" to GeoPoint(-4.0000, 120.0000),
+        "SULAWESI TENGGARA" to GeoPoint(-4.0000, 122.5000),
+        "GORONTALO" to GeoPoint(0.7186, 122.8462),
+        "SULAWESI BARAT" to GeoPoint(-2.5000, 119.3333),
+        "MALUKU" to GeoPoint(-3.2385, 128.0877),
+        "MALUKU UTARA" to GeoPoint(0.7891, 127.8153),
+        "PAPUA BARAT" to GeoPoint(-2.0000, 132.0000),
+        "PAPUA" to GeoPoint(-4.2699, 138.0803),
+        "PAPUA SELATAN" to GeoPoint(-7.8549, 137.4925),
+        "PAPUA TENGAH" to GeoPoint(-4.2882, 136.2758),
+        "PAPUA PEGUNUNGAN" to GeoPoint(-4.1610, 139.0044)
+    )
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        fetchReportsFromFirebase()
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -77,6 +128,8 @@ class HomeFragment : Fragment() {
         mapView.overlays.add(myLocationOverlay)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+
+        roadStabilityData = parsePuprCsvData()
 
         binding.searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -150,7 +203,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun showPuprDataDialog() {
-        val roadStabilityData = parsePuprCsvData()
         if (roadStabilityData.isNotEmpty()) {
             val dialogBuilder = AlertDialog.Builder(requireContext())
             dialogBuilder.setTitle("Data Kemantapan Jalan Nasional")
@@ -159,7 +211,10 @@ class HomeFragment : Fragment() {
                 "${it.provinsi}: ${it.mantapPercentage}% Mantap"
             }.toTypedArray()
 
-            dialogBuilder.setItems(items) { _, _ ->
+            dialogBuilder.setItems(items) { dialog, which ->
+                val selectedProvince = roadStabilityData[which]
+                displayRoadStabilityOnMap(selectedProvince)
+                dialog.dismiss()
             }
             dialogBuilder.setPositiveButton("Tutup") { dialog, _ ->
                 dialog.dismiss()
@@ -170,12 +225,35 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun displayRoadStabilityOnMap(roadStability: RoadStability) {
+        mapView.overlays.clear()
+        mapView.overlays.add(myLocationOverlay)
+
+        val geoPoint = provinceCoordinates[roadStability.provinsi.uppercase(Locale.getDefault())]
+        if (geoPoint != null) {
+            mapView.controller.animateTo(geoPoint)
+            mapView.controller.setZoom(8.0)
+
+            val marker = Marker(mapView)
+            marker.position = geoPoint
+            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            marker.title = "Kemantapan Jalan Nasional"
+            marker.snippet = "${roadStability.provinsi}: ${roadStability.mantapPercentage}% Mantap"
+
+            mapView.overlays.add(marker)
+            mapView.invalidate()
+            Toast.makeText(requireContext(), "Menampilkan data untuk ${roadStability.provinsi}", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(requireContext(), "Koordinat untuk ${roadStability.provinsi} tidak tersedia.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun parsePuprCsvData(): List<RoadStability> {
         val roadStabilityData = mutableListOf<RoadStability>()
         try {
             val inputStream = requireContext().assets.open("Kemantapan Jalan Nasional Tahun 2024.csv")
             val reader = BufferedReader(InputStreamReader(inputStream))
-            reader.readLine() // Skip header
+            reader.readLine()
             reader.forEachLine {
                 val tokens = it.split(";")
                 if (tokens.size >= 7) {
@@ -221,6 +299,56 @@ class HomeFragment : Fragment() {
             .addOnFailureListener {
                 Toast.makeText(requireContext(), "Gagal mendapatkan lokasi.", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun fetchReportsFromFirebase() {
+        val database = FirebaseDatabase.getInstance()
+        val reportsRef = database.getReference("reports")
+
+        reportsRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val reportsList = mutableListOf<ReportItem>()
+                for (reportSnapshot in snapshot.children) {
+                    val reportItem = reportSnapshot.getValue(ReportItem::class.java)
+                    reportItem?.let {
+                        reportsList.add(it)
+                    }
+                }
+                displayReportsOnMap(reportsList)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Toast.makeText(context, "Gagal memuat laporan: ${error.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
+    private fun displayReportsOnMap(reports: List<ReportItem>) {
+        mapView.overlays.clear()
+
+        mapView.overlays.add(myLocationOverlay)
+
+        for (report in reports) {
+            val reportGeoPoint = GeoPoint(report.latitude, report.longitude)
+            val reportMarker = Marker(mapView)
+            reportMarker.position = reportGeoPoint
+            reportMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            reportMarker.title = report.damageType
+            reportMarker.snippet = "Status: ${report.status}\nTingkat Keparahan: ${report.severity}"
+
+            val markerIcon: Drawable? = when (report.severity) {
+                "Rendah" -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_rendah)
+                "Sedang" -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_sedang)
+                "Tinggi" -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_tinggi)
+                else -> ContextCompat.getDrawable(requireContext(), R.drawable.ic_marker_default)
+            }
+            if (markerIcon != null) {
+                reportMarker.icon = markerIcon
+            }
+
+            mapView.overlays.add(reportMarker)
+        }
+        mapView.invalidate()
     }
 
     override fun onResume() {

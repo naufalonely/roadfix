@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 import edu.unikom.uasproject.adapter.SettingAdapter
 import edu.unikom.uasproject.databinding.FragmentSettingsBinding
 import edu.unikom.uasproject.model.ItemType
@@ -77,13 +78,14 @@ class SettingsFragment : Fragment(), SettingAdapter.OnItemClickListener {
 
     private fun showLogoutDialog() {
         AlertDialog.Builder(requireContext())
-            .setTitle("Keluar Aplikasi")
+            .setTitle("Konfirmasi Logout")
             .setMessage("Apakah Anda yakin ingin keluar dari akun?")
-            .setPositiveButton("Ya") { _, _ ->
-                Toast.makeText(context, "Anda berhasil keluar.", Toast.LENGTH_SHORT).show()
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.nav_host_fragment, LoginFragment())
-                    .commit()
+            .setPositiveButton("Ya") { dialog, _ ->
+                val firebaseAuth = FirebaseAuth.getInstance()
+                firebaseAuth.signOut()
+
+                findNavController().navigate(R.id.action_settingsFragment_to_loginFragment)
+                dialog.dismiss()
             }
             .setNegativeButton("Tidak") { dialog, _ ->
                 dialog.dismiss()
